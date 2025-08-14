@@ -6,8 +6,6 @@ import os
 
 ytt_api =YouTubeTranscriptApi()
 
-
-os.path.abspath(__file__)
 # Load the saved model and tokenizer
 model_path = os.path.join(os.path.dirname(__file__), '../model/ad-classifier')#'./ad-classifier'  # e.g. './distilbert_model'
 print(model_path)
@@ -23,8 +21,8 @@ def get_labelled_tscript(video_id):
     except Exception as e: 
         print(e)
 
-    window_size = 20
-    stride =10
+    window_size = 10
+    stride =5
     segments = []
     for i in range(0, len(fetched_transcript) - window_size, stride):
         segment_text = " ".join([snippet.text for snippet in fetched_transcript[i:i+window_size]])
@@ -45,10 +43,4 @@ def get_labelled_tscript(video_id):
         })
 
     return segments
-
-#def merge_segments(segments):
-    #merged_transcript = ' '.join([snippet.text for snippet in fetched_transcript])
-
-    #with open('./predictions/{0}.json'.format(video_id), "w", encoding="utf-8") as f:
-    #    json.dump(segments, f, indent=2, ensure_ascii=False)
 

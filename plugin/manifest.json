@@ -7,10 +7,7 @@
         "48": "icons/border-48.png"
     },
     "permissions": [
-        "https://127.0.0.1:8080/*",
-        "https://127.0.0.1:8080/api/test",
-        "https://127.0.0.1:8080/api/search",
-        "https://86b3a6376391576e6c6111b618b49ddc.serveo.net/*"
+        "https://647d075137a1e3aa310d6a291dbfe679.serveo.net/*"
     ],
     "content_scripts": [
         {
