@@ -1,0 +1,3 @@
+model/
+venv/
+server/__pycache__/

@@ -1,0 +1,25 @@
+{
+    "manifest_version": 2,
+    "name": "Skippy",
+    "version": "1.0",
+    "description": "Skips Video Content on Youtube Videos",
+    "icons": {
+        "48": "icons/border-48.png"
+    },
+    "permissions": [
+        "https://127.0.0.1:8080/*",
+        "https://127.0.0.1:8080/api/test",
+        "https://127.0.0.1:8080/api/search",
+        "https://86b3a6376391576e6c6111b618b49ddc.serveo.net/*"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "https://www.youtube.com/watch*"
+            ],
+            "js": [
+                "processor.js"
+            ]
+        }
+    ]
+}
