@@ -36,6 +36,7 @@ function waitForVideo() {
 function postServer(link) {
     const params = new URLSearchParams();
     params.append('link', video_ref);
+    console.log("[YouTube Tracker] Sending POST request to:", api_url + api_path);
 
     fetch(api_url + api_path, {
         method: 'POST',
