@@ -1,42 +1,60 @@
 // Globals 
-var timestamps
-const api_url = 'https://647d075137a1e3aa310d6a291dbfe679.serveo.net/api/search'
+var timestamps;
+var api_url = '';
+const api_path = '/api/search';
 
-// Wait for the video element to load
+// Load server URL from storage
+setInterval(() => {
+    const storage = (typeof browser !== "undefined") ? browser.storage.sync : chrome.storage.sync;
+
+    storage.get('server').then((result) => {
+        var api_url_old = api_url;
+        api_url = result.server || 'No Server URL Set';
+        if (api_url !== api_url_old) {
+            console.log("[YouTube Tracker] API URL updated:", api_url);
+            postServer(video_ref);
+        }
+    });
+}, 1000); // Check every second
+
 function waitForVideo() {
     const video = document.querySelector('video');
     if (video) {
+        video_ref = window.location.href;
+
         console.log("[YouTube Tracker] Video found.");
-        console.log("[YouTube Tracker]:", window.location.href);
+        console.log("[YouTube Tracker]:", video_ref);
 
-        const params = new URLSearchParams();
-        params.append('link', window.location.href);
-
-        fetch(api_url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: params.toString()
-        }).then(response => response.json())
-            .then(data => {
-                console.log('[YouTube Tracker] POST request responded with:', data);
-                timestamps = data;
-            }).catch(error => {
-                console.error("[YouTube Tracker] POST request error:", error);
-            });
-
+        postServer(video_ref);
         trackVideo(video);
 
     } else {
-        setTimeout(waitForVideo, 1000);
+        setTimeout(waitForVideo, 10000);
     }
+}
+
+function postServer(link) {
+    const params = new URLSearchParams();
+    params.append('link', video_ref);
+
+    fetch(api_url + api_path, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: params.toString()
+    }).then(response => response.json())
+        .then(data => {
+            console.log('[YouTube Tracker] POST request responded with:', data);
+            timestamps = data;
+        }).catch(error => {
+            console.error("[YouTube Tracker] POST request error:", error);
+        });
 }
 
 function trackVideo(video) {
     setInterval(() => {
         const currentTime = video.currentTime;
-        console.log("[YouTube Tracker] Current Time:", currentTime);
 
         const curTime = document.querySelector('video').currentTime;
         var nextTime;

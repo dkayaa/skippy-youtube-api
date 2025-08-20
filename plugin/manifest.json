@@ -3,12 +3,23 @@
     "name": "Skippy",
     "version": "1.0",
     "description": "Skips Video Content on Youtube Videos",
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "id@skippy-youtube",
+            "strict_min_version": "42.0"
+        }
+    },
     "icons": {
-        "48": "icons/border-48.png"
+        "48": "icons/icon-48.png"
     },
     "permissions": [
-        "https://647d075137a1e3aa310d6a291dbfe679.serveo.net/*"
+        "https://*/*",
+        "storage"
     ],
+    "browser_action": {
+        "default_icon": "icons/icon-48.png",
+        "default_popup": "popup.html"
+    },
     "content_scripts": [
         {
             "matches": [
