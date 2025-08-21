@@ -34,9 +34,9 @@ def api_search():
 
     if video_tk is not None:
         print("Video already exists in the database.")
-        cursor.execute("SELECT start_time, label FROM labels WHERE video_fk = %s", (video_tk,))
+        cursor.execute("SELECT start_time, label FROM labels WHERE video_fk = %s", (video_tk))
         segments = cursor.fetchall()
-        label_timestamps = [{'timestamp': int(a[0]), 'label': int(a[1])} for a in segments]
+        label_timestamps = [{'timestamp': int(a[0]), 'label': int(a[1])} for a in segments]    
     else: 
         segments = get_labelled_tscript(video_id) 
         cursor.execute("INSERT INTO videos (video_id) VALUES (%s)", (video_id,))

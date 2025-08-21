@@ -79,4 +79,44 @@ function trackVideo(video) {
     }, 5000); // Log every 5 seconds
 }
 
-waitForVideo();
+let currentVideoId = getVideoIdFromUrl(location.href);
+
+function getVideoIdFromUrl(url) {
+    const match = url.match(/[?&]v=([^&]+)/);
+    return match ? match[1] : null;
+}
+
+function onNewVideo(videoId) {
+    console.log("[Youtube Tracker] New video loaded:", videoId);
+    waitForVideo();
+}
+
+function handleUrlChange() {
+    const newVideoId = getVideoIdFromUrl(location.href);
+    if (newVideoId && newVideoId !== currentVideoId) {
+        currentVideoId = newVideoId;
+        onNewVideo(newVideoId);
+    }
+}
+
+// Hook into History API
+const originalPushState = history.pushState;
+const originalReplaceState = history.replaceState;
+
+history.pushState = function (...args) {
+    originalPushState.apply(this, args);
+    setTimeout(handleUrlChange, 100);
+};
+
+history.replaceState = function (...args) {
+    originalReplaceState.apply(this, args);
+    setTimeout(handleUrlChange, 100);
+};
+
+window.addEventListener("popstate", () => {
+    setTimeout(handleUrlChange, 100);
+});
+
+// Also poll for changes every 500ms (for edge cases)
+setInterval(handleUrlChange, 500);
+
