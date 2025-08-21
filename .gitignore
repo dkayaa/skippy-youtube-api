@@ -3,3 +3,4 @@ venv/
 server/__pycache__/
 .DS_Store
 other/
+server/.env

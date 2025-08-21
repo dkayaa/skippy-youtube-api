@@ -1,2 +1,2 @@
-flask run --port 8080 --host localhost &
-ssh -R 80:localhost:8080 serveo.net
+docker compose up -d
+ssh -R 80:127.0.0.1:8090 serveo.net

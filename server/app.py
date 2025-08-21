@@ -2,6 +2,11 @@ from flask import Flask, render_template, request, jsonify, make_response, g
 from urllib.parse import urlparse, parse_qs
 from transcript_labelling import get_labelled_tscript
 from mysql.connector import connect 
+from dotenv import load_dotenv
+import os 
+
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+
 
 app = Flask(__name__)
 
@@ -58,14 +63,12 @@ def api_test():
 
 def get_db():
     if 'db' not in g:
-
-        # Move to environment variables or config file for security
         g.db = connect(
-            host='localhost', 
-            port=3306, 
-            user='root', 
-            password='root', 
-            database='skippy_youtube_db'
+            host=os.getenv("DB_HOST", "localhost"),
+            port=os.getenv("DB_PORT", 3306),
+            user=os.getenv("DB_USER", "user"),
+            password=os.getenv("DB_PASSWORD", "password"), 
+            database=os.getenv("DB_NAME", "skippy_youtube_db")
             )
         
     return g.db

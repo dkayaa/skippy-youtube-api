@@ -13,5 +13,18 @@ services:
     volumes:
       - db_data:/var/lib/mysql
       - ./initdb:/docker-entrypoint-initdb.d
+  app:
+    build: .
+    ports:
+      - "8090:8090"
+    depends_on:
+      - db
+    environment:
+      ENV: docker
+      DB_USER: user
+      DB_HOST: mysql-db
+      DB_PORT: 3306
+      DB_PASSWORD: password
+      DB_NAME: skippy_youtube_db
 volumes:
   db_data:

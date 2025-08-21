@@ -1,5 +1,5 @@
 // Globals 
-var timestamps;
+var timestamps = [];
 var api_url = '';
 const api_path = '/api/v1/timestamps';
 
@@ -34,6 +34,7 @@ function waitForVideo() {
 }
 
 function getServer(link) {
+    timestamps = []
     const params = new URLSearchParams();
     params.append('link', video_ref);
     console.log("[YouTube Tracker] Sending GET request to:", api_url + api_path);
