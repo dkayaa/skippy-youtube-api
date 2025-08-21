@@ -26,5 +26,6 @@ services:
       DB_PORT: 3306
       DB_PASSWORD: password
       DB_NAME: skippy_youtube_db
+      HUGGINGFACE_MODEL: kayaaaa/ad-classifier
 volumes:
   db_data:

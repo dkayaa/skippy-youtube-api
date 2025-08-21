@@ -9,13 +9,10 @@ from huggingface_hub import login
 ytt_api =YouTubeTranscriptApi()
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
-auth_token = os.getenv("HUGGINGFACE_TOKEN")
-login(token=auth_token)  # Login to Hugging Face Hub
-
 # Load model and tokenizer from Hugging Face
 model_name = os.getenv("HUGGINGFACE_MODEL")
-tokenizer = DistilBertTokenizer.from_pretrained(model_name, token=auth_token)
-model = DistilBertForSequenceClassification.from_pretrained(model_name, token=auth_token)
+tokenizer = DistilBertTokenizer.from_pretrained(model_name)
+model = DistilBertForSequenceClassification.from_pretrained(model_name)
 
 # Put model in evaluation mode
 model.eval()

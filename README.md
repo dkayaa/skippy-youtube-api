@@ -8,7 +8,7 @@ When a user navigates to a Youtube video URL, a request is sent to the backend s
 
 ## Local Setup 
 The plugin and server can be deployed for local use.
-- Deploy the project containers `docker compose up -d`
+- Deploy the project containers `bash run.sh`
 - Copy the serveo.net url forwarding traffic to the server. It should be of the form `https://xxx.serveo.net`
 - Navigate to the browser*, type `about:debugging#/runtime/this-firefox`
 - Click `Load Temporary Add-on` and select `manifest.json` 
