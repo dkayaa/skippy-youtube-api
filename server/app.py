@@ -10,11 +10,12 @@ app = Flask(__name__)
 def root(): 
     return render_template('index.html')
 
-@app.route('/api/search', methods=['POST'])
+@app.route('/api/v1/timestamps', methods=['GET'])
 def api_search(): 
     print(request.data)
-    url = request.form.get('link')
+    url = request.args.get('link')
     # Parse the URL
+    print(url)
     parsed_url = urlparse(url)
 
     # Get the query string part
@@ -32,5 +33,4 @@ def api_search():
 @app.route('/api/test', methods=['GET'])
 def api_test(): 
     response = make_response(jsonify({"status": "success"}), 200)
-    #response.headers.add("Access-Control-Allow-Origin", "*")
     return response

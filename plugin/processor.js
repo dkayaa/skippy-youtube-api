@@ -1,7 +1,7 @@
 // Globals 
 var timestamps;
 var api_url = '';
-const api_path = '/api/search';
+const api_path = '/api/v1/timestamps';
 
 // Load server URL from storage
 setInterval(() => {
@@ -12,7 +12,7 @@ setInterval(() => {
         api_url = result.server || 'No Server URL Set';
         if (api_url !== api_url_old) {
             console.log("[YouTube Tracker] API URL updated:", api_url);
-            postServer(video_ref);
+            getServer(video_ref);
         }
     });
 }, 1000); // Check every second
@@ -25,7 +25,7 @@ function waitForVideo() {
         console.log("[YouTube Tracker] Video found.");
         console.log("[YouTube Tracker]:", video_ref);
 
-        postServer(video_ref);
+        getServer(video_ref);
         trackVideo(video);
 
     } else {
@@ -33,23 +33,22 @@ function waitForVideo() {
     }
 }
 
-function postServer(link) {
+function getServer(link) {
     const params = new URLSearchParams();
     params.append('link', video_ref);
-    console.log("[YouTube Tracker] Sending POST request to:", api_url + api_path);
+    console.log("[YouTube Tracker] Sending GET request to:", api_url + api_path);
 
-    fetch(api_url + api_path, {
-        method: 'POST',
+    fetch(api_url + api_path + '?' + params.toString(), {
+        method: 'GET',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: params.toString()
     }).then(response => response.json())
         .then(data => {
-            console.log('[YouTube Tracker] POST request responded with:', data);
+            console.log('[YouTube Tracker] GET request responded with:', data);
             timestamps = data;
         }).catch(error => {
-            console.error("[YouTube Tracker] POST request error:", error);
+            console.error("[YouTube Tracker] GET request error:", error);
         });
 }
 
