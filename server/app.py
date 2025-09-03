@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, make_response, g
 from urllib.parse import urlparse, parse_qs
-from transcript_labelling import get_labelled_tscript
+from transcript_labelling import get_labelled_tscript, compute_intervals
 from mysql.connector import connect 
 from dotenv import load_dotenv
 import os 
@@ -10,14 +10,55 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 
 app = Flask(__name__)
+
+# TO DO : Proper CORS headers
 CORS(app)
 
 @app.route('/', methods=['GET'])
 def root(): 
     return render_template('index.html')
 
+@app.route('/api/v2/timestamps', methods=['GET'])
+def api_search_v2(): 
+    print(request.data)
+    url = request.args.get('link')
+    # Parse the URL
+    print(url)
+    parsed_url = urlparse(url)
+
+    # Get the query string part
+    query_string = parsed_url.query  # 'term=flask&limit=10&tag=python&tag=web'
+
+    # Parse the query string into a dictionary
+    params = parse_qs(query_string)
+    print(params)
+    video_id = params['v'][0]
+
+    conn = get_db()
+    cursor = conn.cursor() 
+    cursor.execute("SELECT pk FROM videos WHERE video_id = %s", (video_id,))
+    video_tk = cursor.fetchone()
+
+    label_intervals = []
+    if video_tk is None:
+        segments = get_labelled_tscript(video_id) 
+        label_intervals = compute_intervals(segments)
+        cursor.execute("INSERT INTO videos (video_id) VALUES (%s)", (video_id,))
+        video_fk = cursor.lastrowid
+        sql = "INSERT INTO intervals (start_time, end_time, video_fk) VALUES (%s, %s, %s)"
+        cursor.executemany(sql, [(a['start_time'], a['end_time'], video_fk) for a in label_intervals])
+        conn.commit()
+        print("Video and labels inserted into the database.")
+
+    cursor.execute("SELECT pk, start_time, end_time FROM intervals WHERE video_fk = %s", (video_tk))
+    segments = cursor.fetchall()
+    label_intervals = [{'id': int(a[0]), 'start_time': int(a[1]), 'end_time': int(a[2])} for a in segments]    
+    
+    return jsonify(label_intervals)
+
+
 @app.route('/api/v1/timestamps', methods=['GET'])
-def api_search(): 
+def api_search_v1(): 
     print(request.data)
     url = request.args.get('link')
     # Parse the URL

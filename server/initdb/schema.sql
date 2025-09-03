@@ -4,6 +4,7 @@ CREATE TABLE videos (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- api/v1
 CREATE TABLE labels (
     pk INT AUTO_INCREMENT PRIMARY KEY,
     start_time FLOAT NOT NULL,
@@ -12,3 +13,13 @@ CREATE TABLE labels (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (video_fk) REFERENCES videos(pk)
 );
+
+-- api/v2
+CREATE TABLE intervals (
+    pk INT AUTO_INCREMENT PRIMARY KEY,
+    start_time FLOAT NOT NULL,
+    end_time FLOAT NOT NULL,
+    video_fk INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (video_fk) REFERENCES videos(pk)
+)

@@ -46,3 +46,40 @@ def get_labelled_tscript(video_id):
 
     return segments
 
+def compute_intervals(data, interval_threshold = 5): 
+    """
+    input: list of dicts with keys 'text', 'start', 'label' 
+    
+    output: list of dicts with keys 'start_time', 'end_time' 
+    """
+
+    # sort data 
+    data.sort(key=lambda x: x['start'])
+
+    # convert to new interval representation
+    intervals = [] 
+
+    for i in range(0, len(data) - 1): 
+        if data[i]['label'] == 0: 
+            continue 
+        intervals.append({
+            'start_time': data[i]['start'], 
+            'end_time' : data[i+1]['start']
+        })
+
+    # merge intervals 
+    intervals_merged = [] 
+
+    i = 0 
+    j = 0 
+    while i < len(intervals): 
+        intervals_merged.append(intervals[i].copy())
+        for j in range(i, len(intervals)): 
+            if intervals[j]['start_time'] - intervals_merged[-1]['end_time'] <= interval_threshold: 
+                intervals_merged[-1]['end_time'] = intervals[j]['end_time']
+                i+=1 
+            else: 
+                i = j 
+                break
+
+    return intervals_merged
