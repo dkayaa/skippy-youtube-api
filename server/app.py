@@ -4,11 +4,13 @@ from transcript_labelling import get_labelled_tscript
 from mysql.connector import connect 
 from dotenv import load_dotenv
 import os 
+from flask_cors import CORS
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/', methods=['GET'])
 def root(): 
