@@ -56,7 +56,7 @@ def get_labelled_tscript(video_id):
 
     return segments
 
-def compute_intervals(data, interval_threshold = 5, min_duration = 60): 
+def compute_intervals(data, interval_threshold = 5, min_duration = 45): 
     """
     input: list of dicts with keys 'text', 'start', 'label' 
     
