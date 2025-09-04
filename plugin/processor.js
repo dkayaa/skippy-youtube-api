@@ -1,7 +1,7 @@
 // Globals 
 var timestamps = [];
 var api_url = '';
-const api_path = '/api/v1/timestamps';
+const api_path = '/api/v2/timestamps';
 
 // Load server URL from storage
 setInterval(() => {
@@ -55,26 +55,12 @@ function getServer(link) {
 
 function trackVideo(video) {
     setInterval(() => {
-        const currentTime = video.currentTime;
-
         const curTime = document.querySelector('video').currentTime;
-        var nextTime;
         for (let i = 0; i < timestamps.length - 1; i++) {
-            // Currently Not Labelled For Skipping
-            if (timestamps[i].timestamp > curTime && (timestamps[i].label == 0)) {
-                return;
-            }
 
-            if ((timestamps[i].label == 1) && (timestamps[i + 1].timestamp > curTime)) {
-                console.log('[Youtube Tracker] searching from, ', timestamps[i].timestamp)
-                // Find next timestamp label that is 0
-                for (let j = i; j < timestamps.length; j++) {
-                    if (timestamps[j].label == 0) {
-                        nextTime = timestamps[j].timestamp;
-                        document.querySelector('video').currentTime = nextTime
-                        return;
-                    }
-                }
+            if ((timestamps[i].start_time < curTime) && (curTime < timestamps[i].end_time)) {
+                document.querySelector('video').currentTime = timestamps[i].end_time
+                return
             }
         }
     }, 5000); // Log every 5 seconds
