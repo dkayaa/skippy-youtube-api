@@ -37,23 +37,25 @@ def api_search_v2():
     conn = get_db()
     cursor = conn.cursor() 
     cursor.execute("SELECT pk FROM videos WHERE video_id = %s", (video_id,))
-    video_tk = cursor.fetchone()
-
+    video_tk_row = cursor.fetchone()
     label_intervals = []
-    if video_tk is None:
+    if video_tk_row is None:
         segments = get_labelled_tscript(video_id) 
         label_intervals = compute_intervals(segments)
         cursor.execute("INSERT INTO videos (video_id) VALUES (%s)", (video_id,))
-        video_fk = cursor.lastrowid
-        sql = "INSERT INTO intervals (start_time, end_time, video_fk) VALUES (%s, %s, %s)"
-        cursor.executemany(sql, [(a['start_time'], a['end_time'], video_fk) for a in label_intervals])
+        video_tk = cursor.lastrowid
+        sql = "INSERT INTO intervals (start_time, end_time, orgs, video_fk) VALUES (%s, %s,%s, %s)"
+        cursor.executemany(sql, [(a['start_time'], a['end_time'],'|'.join([b for b in a['orgs']]), video_tk) for a in label_intervals])
         conn.commit()
         print("Video and labels inserted into the database.")
-
-    cursor.execute("SELECT pk, start_time, end_time FROM intervals WHERE video_fk = %s", (video_tk))
+    else: 
+        video_tk = video_tk_row[0]
+    print(video_tk)
+    cursor.execute("SELECT pk, start_time, end_time, orgs FROM intervals WHERE video_fk = %s", (video_tk,))
     segments = cursor.fetchall()
-    label_intervals = [{'id': int(a[0]), 'start_time': int(a[1]), 'end_time': int(a[2])} for a in segments]    
+    label_intervals = [{'id': int(a[0]), 'start_time': int(a[1]), 'end_time': int(a[2]), 'orgs': a[3].split('|')} for a in segments]    
     
+    print(label_intervals)
     return jsonify(label_intervals)
 
 

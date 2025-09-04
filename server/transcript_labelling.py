@@ -5,6 +5,7 @@ import torch
 import os 
 from dotenv import load_dotenv
 from huggingface_hub import login 
+from org_extractor import get_orgs 
 
 ytt_api =YouTubeTranscriptApi()
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
@@ -22,10 +23,15 @@ def get_labelled_tscript(video_id):
         fetched_transcript = ytt_api.fetch(video_id)
     except Exception as e: 
         print(e)
-
+    
+    if len(fetched_transcript) == 0 : 
+        return [] 
+    
     window_size = 10
     stride =5
     segments = []
+
+    
     for i in range(0, len(fetched_transcript) - window_size, stride):
         segment_text = " ".join([snippet.text for snippet in fetched_transcript[i:i+window_size]])
         segment_start = fetched_transcript[i].start 
@@ -37,16 +43,20 @@ def get_labelled_tscript(video_id):
         # Get prediction
         logits = outputs.logits
         predicted_class = torch.argmax(logits, dim=1).item()
+        
+        # org ner extraction 
+        orgs = get_orgs(segment_text)
 
         segments.append({
             'text':segment_text,
             'start':segment_start, 
-            'label': predicted_class #default label
+            'label': predicted_class, #default label
+            'orgs' : orgs
         })
 
     return segments
 
-def compute_intervals(data, interval_threshold = 5): 
+def compute_intervals(data, interval_threshold = 5, min_duration = 60): 
     """
     input: list of dicts with keys 'text', 'start', 'label' 
     
@@ -64,7 +74,8 @@ def compute_intervals(data, interval_threshold = 5):
             continue 
         intervals.append({
             'start_time': data[i]['start'], 
-            'end_time' : data[i+1]['start']
+            'end_time' : data[i+1]['start'],
+            'orgs': data[i].get('orgs', [])
         })
 
     # merge intervals 
@@ -77,9 +88,21 @@ def compute_intervals(data, interval_threshold = 5):
         for j in range(i, len(intervals)): 
             if intervals[j]['start_time'] - intervals_merged[-1]['end_time'] <= interval_threshold: 
                 intervals_merged[-1]['end_time'] = intervals[j]['end_time']
+                intervals_merged[-1]['orgs'] = list(set(intervals_merged[-1].get('orgs', []) + intervals[j].get('orgs', [])))
                 i+=1 
             else: 
                 i = j 
                 break
 
+    # Post Process Intervals 
+    # 1. Remove Short intervals 
+    intervals_merged = [x for x in intervals_merged if x['end_time'] - x['start_time'] > min_duration]
+    
+    # 2. add Unknown Tag 
+    for interval in intervals_merged: 
+        if len(interval['orgs']) == 0: 
+            interval['orgs'] = ['UNKNOWN']
+    
+    print(intervals_merged)
+    
     return intervals_merged
