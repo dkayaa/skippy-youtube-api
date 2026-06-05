@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify, make_response, g
-from urllib.parse import urlparse, parse_qs
 from transcript_labelling import get_labelled_tscript
 from mysql.connector import connect 
 from dotenv import load_dotenv
@@ -9,6 +8,7 @@ from flask_cors import CORS
 from backend.database import get_session, init_app
 from backend.interval_store import IntervalStore
 from backend.pipeline import compute_video_analysis
+from youtube_url import YouTubeUrlError, parse_video_id
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
@@ -23,12 +23,18 @@ init_app(app)
 def root(): 
     return render_template('index.html')
 
+def _parse_link_param():
+    try:
+        return parse_video_id(request.args.get('link')), None
+    except YouTubeUrlError as exc:
+        return None, (jsonify({"error": str(exc)}), 400)
+
+
 @app.route('/api/v2/timestamps', methods=['GET'])
 def api_search_v2(): 
-    url = request.args.get('link')
-    parsed_url = urlparse(url)
-    params = parse_qs(parsed_url.query)
-    video_id = params['v'][0]
+    video_id, error = _parse_link_param()
+    if error:
+        return error
 
     store = IntervalStore(get_session())
     label_intervals = store.get_or_create_intervals(
@@ -40,19 +46,9 @@ def api_search_v2():
 
 @app.route('/api/v1/timestamps', methods=['GET'])
 def api_search_v1(): 
-    print(request.data)
-    url = request.args.get('link')
-    # Parse the URL
-    print(url)
-    parsed_url = urlparse(url)
-
-    # Get the query string part
-    query_string = parsed_url.query  # 'term=flask&limit=10&tag=python&tag=web'
-
-    # Parse the query string into a dictionary
-    params = parse_qs(query_string)
-    print(params)
-    video_id = params['v'][0]
+    video_id, error = _parse_link_param()
+    if error:
+        return error
 
     conn = get_db()
     cursor = conn.cursor() 

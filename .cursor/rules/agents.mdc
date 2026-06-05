@@ -12,7 +12,33 @@ plugin/               Firefox extension (client)
 server/               Flask API, ML pipeline, database
 server/backend/       SQLAlchemy models + data access (v2)
 server/migrations/    Alembic schema revisions
+tests/                All tests (never colocate under server/ or plugin/)
 ```
+
+## Tests
+
+- Add tests under `tests/`, grouped by component:
+  - `tests/server/ml/` — transcript labelling, org extraction
+  - `tests/server/utils/` — URL parsing, helpers
+  - `tests/server/backend/` — stores, models, persistence
+  - `tests/server/api/` — Flask routes and request/response
+  - `tests/plugin/` — extension scripts
+- Use `tests/support/path.py` to import from `server/`; do not duplicate path hacks in each file.
+- Run from repo root: `PYTHONPATH=. python -m unittest discover -s tests -p "test_*.py"`
+
+### Run tests on code changes
+
+After any code change, run the matching test suite before finishing. Fix failures caused by your change; do not leave broken tests.
+
+| Changed area | Command |
+|---|---|
+| Any server change (default) | `PYTHONPATH=. python -m unittest discover -s tests -p "test_*.py"` |
+| `server/transcript_labelling.py`, `server/org_extractor.py` | `PYTHONPATH=. python -m unittest discover -s tests/server/ml -p "test_*.py"` |
+| `server/youtube_url.py`, `server/app.py` (validation) | `PYTHONPATH=. python -m unittest discover -s tests/server/utils -p "test_*.py"` |
+| `server/backend/` | `PYTHONPATH=. python -m unittest discover -s tests/server/backend -p "test_*.py"` |
+| `plugin/` | `PYTHONPATH=. python -m unittest discover -s tests/plugin -p "test_*.py"` |
+
+If you add or modify behavior, add or update tests in the matching `tests/` subfolder in the same change.
 
 ## Architecture
 
@@ -31,7 +57,8 @@ server/migrations/    Alembic schema revisions
 - SQLAlchemy ORM for new DB code; no new raw SQL except v1 migration.
 - Alembic migration for every schema change; idempotent when possible.
 - Self-explanatory code; comments only for non-obvious logic.
-- Tests for bugs and non-trivial logic only; run `python -m unittest test_transcript_labelling.py` when changing `transcript_labelling.py` or `compute_intervals`.
+- Tests for bugs and non-trivial logic only; place them in the matching `tests/` subfolder.
+- Always run the relevant test suite after code changes (see **Run tests on code changes**).
 - Never commit `.env`, credentials, or tokens.
 - Do not commit, push, or amend unless the user explicitly asks.
 
@@ -42,5 +69,7 @@ server/migrations/    Alembic schema revisions
 - [ ] Schema changes include an Alembic migration
 - [ ] No secrets, debug prints, or dead commented code
 - [ ] v2 DB access via `backend/`, not ad-hoc SQL in `app.py`
+- [ ] New tests live under `tests/` in the correct subfolder
+- [ ] Relevant test suite run and passing (or failures explained)
 
 When unsure, read `app.py`, `server/backend/`, and `transcript_labelling.py` first.
