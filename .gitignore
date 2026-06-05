@@ -1,6 +1,28 @@
-model/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
 venv/
-server/__pycache__/
+.venv/
+env/
+
+# Environment / secrets
+.env
+**/.env
+
+# ML model cache
+model/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
 .DS_Store
+
+# Local scratch
 other/
-server/.env
