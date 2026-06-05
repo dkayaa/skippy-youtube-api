@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, make_response, g
-from transcript_labelling import get_labelled_tscript
+from transcript_labelling import TranscriptFetchError, get_labelled_tscript
 from mysql.connector import connect 
 from dotenv import load_dotenv
 import os 
@@ -36,11 +36,14 @@ def api_search_v2():
     if error:
         return error
 
-    store = IntervalStore(get_session())
-    label_intervals = store.get_or_create_intervals(
-        video_id,
-        lambda: compute_video_analysis(video_id),
-    )
+    try:
+        store = IntervalStore(get_session())
+        label_intervals = store.get_or_create_intervals(
+            video_id,
+            lambda: compute_video_analysis(video_id),
+        )
+    except TranscriptFetchError as exc:
+        return jsonify({"error": str(exc)}), 404
     return jsonify(label_intervals)
 
 
@@ -62,8 +65,11 @@ def api_search_v1():
         cursor.execute("SELECT start_time, label FROM labels WHERE video_fk = %s", (video_tk))
         segments = cursor.fetchall()
         label_timestamps = [{'timestamp': int(a[0]), 'label': int(a[1])} for a in segments]    
-    else: 
-        segments = get_labelled_tscript(video_id) 
+    else:
+        try:
+            segments = get_labelled_tscript(video_id)
+        except TranscriptFetchError as exc:
+            return jsonify({"error": str(exc)}), 404
         cursor.execute("INSERT INTO videos (video_id) VALUES (%s)", (video_id,))
         video_fk = cursor.lastrowid
         #sql = "INSERT INTO labels (start_time, transcript, video_fk, label) VALUES (%s, %s, %s, %s)"

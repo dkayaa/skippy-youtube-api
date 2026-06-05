@@ -18,20 +18,26 @@ model = DistilBertForSequenceClassification.from_pretrained(model_name)
 # Put model in evaluation mode
 model.eval()
 
-def get_labelled_tscript(video_id):
+
+class TranscriptFetchError(RuntimeError):
+    """Raised when the YouTube transcript cannot be fetched."""
+
+
+def get_labelled_tscript(video_id: str) -> list[dict]:
     try:
         fetched_transcript = ytt_api.fetch(video_id)
-    except Exception as e: 
-        print(e)
-    
-    if len(fetched_transcript) == 0 : 
-        return [] 
-    
+    except Exception as exc:
+        raise TranscriptFetchError(
+            f"Failed to fetch transcript for video {video_id}"
+        ) from exc
+
+    if not fetched_transcript:
+        return []
+
     window_size = 10
-    stride =5
+    stride = 5
     segments = []
 
-    
     for i in range(0, len(fetched_transcript) - window_size, stride):
         segment_text = " ".join([snippet.text for snippet in fetched_transcript[i:i+window_size]])
         segment_start = fetched_transcript[i].start 
