@@ -10,7 +10,9 @@ ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_RUN_PORT=8090
 
+RUN chmod +x entrypoint.sh
+
 # Expose the port (optional, for documentation and inter-container communication)
 EXPOSE 8090
 
-CMD ["flask", "run"]
+CMD ["./entrypoint.sh"]
