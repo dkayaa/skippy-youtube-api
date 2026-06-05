@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, make_response, g
 from urllib.parse import urlparse, parse_qs
-from transcript_labelling import get_labelled_tscript, compute_intervals
+from transcript_labelling import get_labelled_tscript
 from mysql.connector import connect 
 from dotenv import load_dotenv
 import os 
@@ -8,6 +8,7 @@ from flask_cors import CORS
 
 from backend.database import get_session, init_app
 from backend.interval_store import IntervalStore
+from backend.pipeline import compute_video_analysis
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
@@ -32,7 +33,7 @@ def api_search_v2():
     store = IntervalStore(get_session())
     label_intervals = store.get_or_create_intervals(
         video_id,
-        lambda: compute_intervals(get_labelled_tscript(video_id)),
+        lambda: compute_video_analysis(video_id),
     )
     return jsonify(label_intervals)
 
