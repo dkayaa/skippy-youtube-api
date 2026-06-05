@@ -83,9 +83,9 @@ def upgrade() -> None:
                 {"intervals_json": json.dumps(intervals), "pk": pk},
             )
 
-        existing_indexes = {index["name"] for index in inspector.get_indexes("intervals")}
-        if "ix_intervals_video_fk" in existing_indexes:
-            op.drop_index("ix_intervals_video_fk", table_name="intervals")
+        foreign_keys = inspector.get_foreign_keys("intervals")
+        for foreign_key in foreign_keys:
+            op.drop_constraint(foreign_key["name"], "intervals", type_="foreignkey")
         op.drop_table("intervals")
 
 
