@@ -13,8 +13,22 @@ load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 app = Flask(__name__)
 
-# TO DO : Proper CORS headers
-CORS(app)
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": [
+                origin.strip()
+                for origin in os.getenv(
+                    "CORS_ORIGINS",
+                    "https://www.youtube.com",
+                ).split(",")
+                if origin.strip()
+            ],
+            "methods": ["GET", "OPTIONS"],
+        }
+    },
+)
 init_app(app)
 
 
