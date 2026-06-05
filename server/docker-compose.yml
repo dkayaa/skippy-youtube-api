@@ -27,5 +27,14 @@ services:
       DB_PASSWORD: password
       DB_NAME: skippy_youtube_db
       HUGGINGFACE_MODEL: kayaaaa/ad-classifier
+      CLASSIFIER_BATCH_SIZE: 32
+    # Uncomment for NVIDIA GPU (requires nvidia-container-toolkit):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
 volumes:
   db_data:

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.analysis_runner import is_analysis_active, start_analysis_job
 from backend.models import Video
 from backend.pipeline import (
     PIPELINE_VERSION,
@@ -18,49 +19,50 @@ class IntervalStore:
     def __init__(self, session: Session):
         self._session = session
 
-    def get_or_create_intervals(
+    def request_intervals(
         self,
         video_id: str,
         compute_analysis: Callable[[], dict],
-    ) -> list[dict]:
+        *,
+        retry: bool = False,
+    ) -> dict:
         current_model = get_model_version()
         video = self._session.scalar(select(Video).where(Video.video_id == video_id))
 
         if video is not None and self._has_cached_intervals(video):
-            if self._needs_recompute(video, current_model):
-                pass
-            else:
+            if not self._needs_recompute(video, current_model):
                 if video.model_version in (None, "migrated"):
                     self._backfill_metadata(video, current_model)
                     self._session.commit()
-                return self._to_response(video.intervals_json)
+                return self._status_ready(video)
 
+        if (
+            video is not None
+            and video.status == STATUS_FAILED
+            and not retry
+            and not self._needs_recompute(video, current_model)
+        ):
+            return self._status_failed(video)
+
+        if video is not None and video.status == STATUS_PENDING:
+            if is_analysis_active(video_id):
+                return self._status_pending()
+            self._mark_pending(video)
+            start_analysis_job(video_id, compute_analysis)
+            return self._status_pending()
+
+        self._mark_pending(video, video_id)
+        start_analysis_job(video_id, compute_analysis)
+        return self._status_pending()
+
+    def _mark_pending(self, video: Video | None, video_id: str) -> None:
         if video is None:
             video = Video(video_id=video_id, status=STATUS_PENDING)
             self._session.add(video)
         else:
             video.status = STATUS_PENDING
             video.error_message = None
-
         self._session.commit()
-
-        try:
-            result = compute_analysis()
-            video.intervals_json = self._serialize_intervals(result["intervals"])
-            video.model_version = current_model
-            video.pipeline_version = PIPELINE_VERSION
-            video.transcript_hash = result.get("transcript_hash")
-            video.computed_at = datetime.now(timezone.utc)
-            video.status = STATUS_READY
-            video.error_message = None
-        except Exception as exc:
-            video.status = STATUS_FAILED
-            video.error_message = str(exc)
-            self._session.commit()
-            raise
-
-        self._session.commit()
-        return self._to_response(video.intervals_json)
 
     @staticmethod
     def _has_cached_intervals(video: Video) -> bool:
@@ -81,18 +83,7 @@ class IntervalStore:
             video.computed_at = datetime.now(timezone.utc)
 
     @staticmethod
-    def _serialize_intervals(intervals: list[dict]) -> list[dict]:
-        return [
-            {
-                "start_time": item["start_time"],
-                "end_time": item["end_time"],
-                "orgs": item["orgs"],
-            }
-            for item in intervals
-        ]
-
-    @staticmethod
-    def _to_response(intervals_json: list[dict] | None) -> list[dict]:
+    def format_intervals(intervals_json: list[dict] | None) -> list[dict]:
         if not intervals_json:
             return []
 
@@ -105,3 +96,20 @@ class IntervalStore:
             }
             for index, item in enumerate(intervals_json)
         ]
+
+    def _status_ready(self, video: Video) -> dict:
+        return {
+            "status": STATUS_READY,
+            "intervals": self.format_intervals(video.intervals_json),
+        }
+
+    @staticmethod
+    def _status_pending() -> dict:
+        return {"status": STATUS_PENDING}
+
+    @staticmethod
+    def _status_failed(video: Video) -> dict:
+        return {
+            "status": STATUS_FAILED,
+            "error": video.error_message or "Analysis failed",
+        }

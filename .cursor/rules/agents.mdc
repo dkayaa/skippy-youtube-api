@@ -42,9 +42,8 @@ If you add or modify behavior, add or update tests in the matching `tests/` subf
 
 ## Architecture
 
-- **v2 API** (`/api/v2/timestamps`): `server/backend/` (`IntervalStore`, SQLAlchemy). Preferred for new DB work.
-- **v1 API** (`/api/v1/timestamps`): legacy `mysql.connector`. Migrate to `backend/` when touching v1.
-- **ML**: `transcript_labelling.py`, `org_extractor.py`. Models load at import time, not per request.
+- **API** (`/api/v2/timestamps`): `server/backend/` (`IntervalStore`, SQLAlchemy). Status-based polling (`pending` / `ready` / `failed`).
+- **ML**: `transcript_labelling.py` (batched DistilBERT, NER on ad windows only), `org_extractor.py`. Models load at import time; auto-selects CUDA/MPS/CPU.
 - **Schema**: Alembic is source of truth. Add migrations in `server/migrations/versions/`; do not define tables in `initdb/schema.sql`.
 - **Startup**: `entrypoint.sh` → `alembic upgrade head` → `flask run`.
 
@@ -54,7 +53,7 @@ If you add or modify behavior, add or update tests in the matching `tests/` subf
 - Match existing naming, layout, imports, and abstraction level.
 - Thin route handlers; persistence in `server/backend/` stores.
 - Type hints on new public functions and store methods.
-- SQLAlchemy ORM for new DB code; no new raw SQL except v1 migration.
+- SQLAlchemy ORM for all DB access; no raw SQL in route handlers.
 - Alembic migration for every schema change; idempotent when possible.
 - Self-explanatory code; comments only for non-obvious logic.
 - Tests for bugs and non-trivial logic only; place them in the matching `tests/` subfolder.
