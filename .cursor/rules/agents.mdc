@@ -1,0 +1,46 @@
+---
+description: Skippy project context and coding standards for every task
+alwaysApply: true
+---
+
+# Skippy agent guide
+
+Skippy detects in-video ad reads on YouTube. A Firefox plugin calls a Flask API; the server fetches transcripts, classifies chunks with DistilBERT, and returns skip timestamps/intervals.
+
+```
+plugin/               Firefox extension (client)
+server/               Flask API, ML pipeline, database
+server/backend/       SQLAlchemy models + data access (v2)
+server/migrations/    Alembic schema revisions
+```
+
+## Architecture
+
+- **v2 API** (`/api/v2/timestamps`): `server/backend/` (`IntervalStore`, SQLAlchemy). Preferred for new DB work.
+- **v1 API** (`/api/v1/timestamps`): legacy `mysql.connector`. Migrate to `backend/` when touching v1.
+- **ML**: `transcript_labelling.py`, `org_extractor.py`. Models load at import time, not per request.
+- **Schema**: Alembic is source of truth. Add migrations in `server/migrations/versions/`; do not define tables in `initdb/schema.sql`.
+- **Startup**: `entrypoint.sh` → `alembic upgrade head` → `flask run`.
+
+## Coding requirements
+
+- Minimal diff only; no unrelated refactors or over-engineering.
+- Match existing naming, layout, imports, and abstraction level.
+- Thin route handlers; persistence in `server/backend/` stores.
+- Type hints on new public functions and store methods.
+- SQLAlchemy ORM for new DB code; no new raw SQL except v1 migration.
+- Alembic migration for every schema change; idempotent when possible.
+- Self-explanatory code; comments only for non-obvious logic.
+- Tests for bugs and non-trivial logic only; run `python -m unittest test_transcript_labelling.py` when changing `transcript_labelling.py` or `compute_intervals`.
+- Never commit `.env`, credentials, or tokens.
+- Do not commit, push, or amend unless the user explicitly asks.
+
+## Review before finishing
+
+- [ ] Scoped to the request; no drive-by edits
+- [ ] Matches surrounding code and `server/backend/` patterns
+- [ ] Schema changes include an Alembic migration
+- [ ] No secrets, debug prints, or dead commented code
+- [ ] v2 DB access via `backend/`, not ad-hoc SQL in `app.py`
+
+When unsure, read `app.py`, `server/backend/`, and `transcript_labelling.py` first.
