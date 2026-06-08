@@ -1,7 +1,7 @@
 services:
   db:
     image: mysql:8.0
-    container_name: skippy-db
+    container_name: skipr-db
     restart: unless-stopped
     env_file: .env
     environment:

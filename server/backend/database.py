@@ -14,7 +14,7 @@ def build_database_url() -> str:
     password = os.getenv("DB_PASSWORD", "password")
     host = os.getenv("DB_HOST", "localhost")
     port = os.getenv("DB_PORT", "3306")
-    name = os.getenv("DB_NAME", "skippy_youtube_db")
+    name = os.getenv("DB_NAME", "skipr_youtube_db")
     return f"mysql+mysqlconnector://{user}:{password}@{host}:{port}/{name}"
 
 
