@@ -49,7 +49,7 @@ Plugin lives in a **separate repo**. The last in-repo version is incompatible wi
 - [x] Remove hardcoded credentials from `docker-compose.yml` — use `.env`
 - [x] Inject secrets via `.env` (gitignored); see `.env.example`
 - [x] Add `.env.example` documenting: `DB_*`, `HUGGINGFACE_MODEL`, `CORS_ORIGINS`, `CLASSIFIER_BATCH_SIZE`, `DOMAIN`
-- [x] Restrict MySQL port — `127.0.0.1:3306` locally; no public port in prod overlay
+- [x] Restrict MySQL port — localhost only in dev; no public port in prod overlay (compose MySQL on same machine)
 - [ ] Provision Droplet, domain DNS, firewall, and run `docker compose ... up` on the server
 
 ### 1.3 Harden job lifecycle (single-server beta)

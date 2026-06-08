@@ -1,0 +1,13 @@
+# Local dev overlay: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+#
+# Exposes app and db on localhost for curl / mysql client access.
+# Not used in production.
+
+services:
+  db:
+    ports:
+      - "127.0.0.1:3306:3306"
+
+  app:
+    ports:
+      - "127.0.0.1:8090:8090"

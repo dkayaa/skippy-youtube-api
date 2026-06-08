@@ -9,8 +9,6 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "127.0.0.1:3306:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./initdb:/docker-entrypoint-initdb.d
@@ -28,8 +26,6 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 3306
-    ports:
-      - "127.0.0.1:8090:8090"
     depends_on:
       db:
         condition: service_healthy

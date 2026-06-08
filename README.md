@@ -8,7 +8,7 @@ When a user navigates to a Youtube video URL, a request is sent to the backend s
 
 ## Local Setup 
 The plugin and server can be deployed for local use.
-- Copy `server/.env.example` to `server/.env`, then `cd server && docker compose up -d --build`
+- Copy `server/.env.example` to `server/.env`, then `cd server && docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build`
 - Or use the serveo tunnel for quick plugin testing: `cd server; bash run.sh`
 - Copy the serveo.net url forwarding traffic to the server. It should be of the form `https://xxx.serveo.net`
 - Navigate to the browser*, type `about:debugging#/runtime/this-firefox`
