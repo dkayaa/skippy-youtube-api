@@ -1,40 +1,44 @@
 services:
   db:
     image: mysql:8.0
-    container_name: mysql-db
-    restart: always
+    container_name: skippy-db
+    restart: unless-stopped
+    env_file: .env
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: skippy_youtube_db
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./initdb:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   app:
     build: .
-    ports:
-      - "8090:8090"
-    depends_on:
-      - db
+    restart: unless-stopped
+    env_file: .env
     environment:
-      ENV: docker
-      DB_USER: user
-      DB_HOST: mysql-db
+      DB_HOST: db
       DB_PORT: 3306
-      DB_PASSWORD: password
-      DB_NAME: skippy_youtube_db
-      HUGGINGFACE_MODEL: kayaaaa/ad-classifier
-      CLASSIFIER_BATCH_SIZE: 32
-    # Uncomment for NVIDIA GPU (requires nvidia-container-toolkit):
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
+    ports:
+      - "127.0.0.1:8090:8090"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
 volumes:
   db_data:

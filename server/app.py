@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, make_response
 from dotenv import load_dotenv
 import os
 from flask_cors import CORS
+from sqlalchemy import text
 
 from backend.database import get_session, init_app
 from backend.interval_store import IntervalStore
@@ -59,6 +60,15 @@ def api_search_v2():
     )
     status_code = 202 if result["status"] == STATUS_PENDING else 200
     return jsonify(result), status_code
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    try:
+        get_session().execute(text("SELECT 1"))
+        return jsonify({"status": "ok"}), 200
+    except Exception as exc:
+        return jsonify({"status": "error", "error": str(exc)}), 503
 
 
 @app.route("/api/test", methods=["GET"])

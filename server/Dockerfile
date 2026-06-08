@@ -6,10 +6,6 @@ COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-ENV FLASK_APP=app.py
-ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_RUN_PORT=8090
-
 RUN chmod +x entrypoint.sh
 
 # Expose the port (optional, for documentation and inter-container communication)

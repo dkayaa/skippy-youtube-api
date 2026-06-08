@@ -8,13 +8,18 @@ When a user navigates to a Youtube video URL, a request is sent to the backend s
 
 ## Local Setup 
 The plugin and server can be deployed for local use.
-- Deploy the project containers using the setup script `cd server; bash run.sh`
+- Copy `server/.env.example` to `server/.env`, then `cd server && docker compose up -d --build`
+- Or use the serveo tunnel for quick plugin testing: `cd server; bash run.sh`
 - Copy the serveo.net url forwarding traffic to the server. It should be of the form `https://xxx.serveo.net`
 - Navigate to the browser*, type `about:debugging#/runtime/this-firefox`
 - Click `Load Temporary Add-on` and select `manifest.json` 
 - Navigate to the plugin configuration menu and paste the serveo url and hit save.
 
 *Currently only supports Firefox
+
+## Production deployment
+
+See [deploy/digitalocean.md](deploy/digitalocean.md) for DigitalOcean Droplet setup (gunicorn, Caddy TLS, managed or compose MySQL).
 
 ## Training Data
 An indicative training sample is provided below 

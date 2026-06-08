@@ -1,0 +1,34 @@
+# Production overlay: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# With DigitalOcean Managed MySQL: set DB_HOST/DB_* in .env to the managed cluster,
+# then run only app + caddy:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d app caddy
+
+services:
+  db:
+    ports: []
+
+  app:
+    ports: []
+    environment:
+      DB_HOST: ${DB_HOST:-db}
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  caddy_data:
+  caddy_config:
