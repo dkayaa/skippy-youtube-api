@@ -1,13 +1,13 @@
-# Skippy — Go-Live Plan
+# Skipr — Go-Live Plan
 
-Roadmap to take Skippy from a working dev stack to something you can run live. The server v2 backend is largely done; the gaps are client integration, hosting, and ops.
+Roadmap to take Skipr from a working dev stack to something you can run live. The server v2 backend is largely done; the gaps are client integration, hosting, and ops.
 
 **Current state (baseline)**
 
 | Layer | Status |
 |-------|--------|
 | API + ML + DB | Implemented (`/api/v2/timestamps`, async polling, SQLAlchemy cache, Alembic) |
-| Firefox plugin | Removed from this repo (`d75689a`); last version predates v2 polling |
+| skipr-plugin | Removed from this repo (`d75689a`); last version predates v2 polling |
 | Deployment | Dev-only: `flask run` + serveo SSH tunnel |
 | CI, auth, monitoring | Missing |
 | Tests | 4 ML failures (`min_duration=20` vs test expectations) + 1 store error without SQLAlchemy in host venv |
@@ -16,11 +16,11 @@ Roadmap to take Skippy from a working dev stack to something you can run live. T
 
 ## Phase 1 — End-to-end works (private beta)
 
-Goal: you and a few friends can use Skippy against a stable HTTPS API.
+Goal: you and a few friends can use Skipr against a stable HTTPS API.
 
-### 1.1 Update the Firefox plugin for v2
+### 1.1 Update skipr-plugin for v2
 
-Plugin lives in a **separate repo**. The last in-repo version is incompatible with the current API.
+skipr-plugin lives in a **separate repo**. The last in-repo version is incompatible with the current API.
 
 - [ ] **Poll on `pending`** — first request returns `202` + `{"status": "pending"}`; retry until `ready` or `failed`
 - [ ] **Parse v2 response** — use `data.intervals`, not the whole response object
@@ -28,7 +28,7 @@ Plugin lives in a **separate repo**. The last in-repo version is incompatible wi
 - [ ] **Fix skip loop** — remove `timestamps.length - 1` off-by-one (last interval was skipped)
 - [ ] **URL parsing** — support `youtu.be`, `/shorts/`, `/embed/` (server already does via `youtube_url.py`)
 - [ ] **Tighter skip check** — reduce 5s interval or use `timeupdate` / `requestAnimationFrame` so short ad windows aren't missed
-- [ ] **Point plugin at production URL** — stable HTTPS host, not serveo
+- [ ] **Point skipr-plugin at production URL** — stable HTTPS host, not serveo
 
 **v2 contract reference**
 
@@ -67,7 +67,7 @@ Plugin lives in a **separate repo**. The last in-repo version is incompatible wi
 API is fully public today.
 
 - [ ] Per-IP rate limiting on `/api/v2/timestamps`
-- [ ] Optional shared API key header from the plugin
+- [ ] Optional shared API key header from skipr-plugin
 - [ ] Timeouts on YouTube transcript fetch and model inference
 
 ### 1.5 Health checks
@@ -84,20 +84,20 @@ API is fully public today.
 - [ ] Add `.github/workflows/` — run tests in Docker (ML modules load HF models at import time)
 - [ ] CI fails on regressions before merge
 
-**Phase 1 done when:** plugin polls v2, skips ads on real videos, server runs on HTTPS with gunicorn, health check passes, CI green.
+**Phase 1 done when:** skipr-plugin polls v2, skips ads on real videos, server runs on HTTPS with gunicorn, health check passes, CI green.
 
 ---
 
 ## Phase 2 — Public launch
 
-Goal: strangers can install and use Skippy without you hand-holding.
+Goal: strangers can install and use Skipr without you hand-holding.
 
 ### 2.1 Firefox Add-ons distribution
 
 - [ ] AMO signing / store listing
 - [ ] Privacy policy (video URLs sent to your server; what you store/cache)
 - [ ] Evaluate Manifest V2 → MV3 migration
-- [ ] Update README — link plugin repo, remove serveo-only instructions for production path
+- [ ] Update README — link skipr-plugin repo, remove serveo-only instructions for production path
 
 ### 2.2 Observability
 
@@ -128,7 +128,7 @@ Not blockers for beta or initial launch.
 - [ ] Use `transcript_hash` for cache invalidation when YouTube transcript changes (model/pipeline version already triggers recompute)
 - [ ] OpenAPI / formal API docs for client implementers
 - [ ] Remove unused `Authlib` from `requirements.txt`
-- [ ] `tests/plugin/` once plugin is back in-repo or tested in its own repo
+- [ ] `tests/skipr-plugin/` once skipr-plugin is back in-repo or tested in its own repo
 - [ ] Global `@app.errorhandler` for JSON 500s instead of Flask HTML
 
 ---
@@ -136,7 +136,7 @@ Not blockers for beta or initial launch.
 ## Suggested order of work
 
 ```
-Plugin v2 integration
+skipr-plugin v2 integration
     → Deploy (gunicorn + TLS + real DB)
         → Single worker + stale pending recovery
             → Rate limit + /health
@@ -151,7 +151,7 @@ Plugin v2 integration
 
 | Task | Primary files |
 |------|----------------|
-| Plugin v2 | Separate plugin repo (`processor.js`, `manifest.json`, `popup.js`) |
+| skipr-plugin v2 | skipr-plugin repo (`processor.js`, `manifest.json`, `popup.js`) |
 | Production server | `server/entrypoint.sh`, `server/Dockerfile`, `server/docker-compose.yml` |
 | Job lifecycle | `server/backend/analysis_runner.py`, `server/backend/interval_store.py` |
 | Health | `server/app.py` |

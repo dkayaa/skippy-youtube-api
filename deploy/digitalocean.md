@@ -1,4 +1,4 @@
-# Deploy Skippy on DigitalOcean
+# Deploy Skipr on DigitalOcean
 
 Use a **Droplet + Docker Compose** (app, MySQL, Caddy on one machine). Skip App Platform — PyTorch and Hugging Face models need several GB of RAM.
 
@@ -54,8 +54,8 @@ ssh root@<droplet-ip>
 apt-get update && apt-get install -y docker.io docker-compose-v2 git
 systemctl enable --now docker
 
-git clone <your-repo-url> /opt/skippy
-cd /opt/skippy/server
+git clone <your-repo-url> /opt/skipr
+cd /opt/skipr/server
 ```
 
 ## 3. Configure secrets
@@ -79,9 +79,9 @@ CORS_ORIGINS=https://www.youtube.com
 HUGGINGFACE_MODEL=kayaaaa/ad-classifier
 CLASSIFIER_BATCH_SIZE=32
 
-DB_USER=skippy
+DB_USER=skipr
 DB_PASSWORD=<strong-password>
-DB_NAME=skippy_youtube_db
+DB_NAME=skipr_youtube_db
 MYSQL_ROOT_PASSWORD=<strong-root-password>
 ```
 
@@ -113,12 +113,12 @@ curl -s "https://api.yourdomain.com/api/v2/timestamps?link=https://www.youtube.c
 # {"status":"pending"}  (202) then poll until ready
 ```
 
-Point the Firefox plugin at `https://api.yourdomain.com` (no trailing slash).
+Point skipr-plugin at `https://api.yourdomain.com` (no trailing slash).
 
 ## 6. Updates
 
 ```bash
-cd /opt/skippy
+cd /opt/skipr
 git pull
 cd server
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
@@ -146,12 +146,12 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 # MySQL: 127.0.0.1:3306 (localhost only)
 ```
 
-`run.sh` / serveo is for quick plugin testing only — not production.
+`run.sh` / serveo is for quick skipr-plugin testing only — not production.
 
 ## Backups (optional)
 
 Compose MySQL data lives in the `db_data` Docker volume. For a portfolio project, occasional manual backup is enough:
 
 ```bash
-docker compose exec db mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" skippy_youtube_db > backup.sql
+docker compose exec db mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" skipr_youtube_db > backup.sql
 ```

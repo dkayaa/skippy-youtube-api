@@ -1,18 +1,18 @@
 ---
-description: Skippy project context and coding standards for every task
+description: Skipr project context and coding standards for every task
 alwaysApply: true
 ---
 
-# Skippy agent guide
+# Skipr agent guide
 
-Skippy detects in-video ad reads on YouTube. A Firefox plugin calls a Flask API; the server fetches transcripts, classifies chunks with DistilBERT, and returns skip timestamps/intervals.
+Skipr detects in-video ad reads on YouTube. The skipr-plugin Firefox extension calls a Flask API; the server fetches transcripts, classifies chunks with DistilBERT, and returns skip timestamps/intervals.
 
 ```
-plugin/               Firefox extension (client)
+skipr-plugin/         Firefox extension (client)
 server/               Flask API, ML pipeline, database
 server/backend/       SQLAlchemy models + data access (v2)
 server/migrations/    Alembic schema revisions
-tests/                All tests (never colocate under server/ or plugin/)
+tests/                All tests (never colocate under server/ or skipr-plugin/)
 ```
 
 ## Tests
@@ -22,7 +22,7 @@ tests/                All tests (never colocate under server/ or plugin/)
   - `tests/server/utils/` — URL parsing, helpers
   - `tests/server/backend/` — stores, models, persistence
   - `tests/server/api/` — Flask routes and request/response
-  - `tests/plugin/` — extension scripts
+  - `tests/skipr-plugin/` — extension scripts
 - Use `tests/support/path.py` to import from `server/`; do not duplicate path hacks in each file.
 - Run from repo root: `PYTHONPATH=. python -m unittest discover -s tests -p "test_*.py"`
 
@@ -36,7 +36,7 @@ After any code change, run the matching test suite before finishing. Fix failure
 | `server/transcript_labelling.py`, `server/org_extractor.py` | `PYTHONPATH=. python -m unittest discover -s tests/server/ml -p "test_*.py"` |
 | `server/youtube_url.py`, `server/app.py` (validation) | `PYTHONPATH=. python -m unittest discover -s tests/server/utils -p "test_*.py"` |
 | `server/backend/` | `PYTHONPATH=. python -m unittest discover -s tests/server/backend -p "test_*.py"` |
-| `plugin/` | `PYTHONPATH=. python -m unittest discover -s tests/plugin -p "test_*.py"` |
+| `skipr-plugin/` | `PYTHONPATH=. python -m unittest discover -s tests/skipr-plugin -p "test_*.py"` |
 
 If you add or modify behavior, add or update tests in the matching `tests/` subfolder in the same change.
 
@@ -45,7 +45,7 @@ If you add or modify behavior, add or update tests in the matching `tests/` subf
 - **API** (`/api/v2/timestamps`): `server/backend/` (`IntervalStore`, SQLAlchemy). Status-based polling (`pending` / `ready` / `failed`).
 - **ML**: `transcript_labelling.py` (batched DistilBERT, NER on ad windows only), `org_extractor.py`. Models load at import time; auto-selects CUDA/MPS/CPU.
 - **Schema**: Alembic is source of truth. Add migrations in `server/migrations/versions/`; do not define tables in `initdb/schema.sql`.
-- **Startup**: `entrypoint.sh` → `alembic upgrade head` → `flask run`.
+- **Startup**: `entrypoint.sh` → `alembic upgrade head` → `gunicorn`.
 
 ## Coding requirements
 

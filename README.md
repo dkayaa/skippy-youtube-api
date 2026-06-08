@@ -1,19 +1,19 @@
 ![image](./images/title.png)
 ## What ?
-A browser plugin that uses AI text classification to detect and scrub advertisement content from Youtube videos in real-time. 
+Skipr is a browser extension (`skipr-plugin`) that uses AI text classification to detect and scrub advertisement content from Youtube videos in real-time. 
 ## Why ? 
 Improve the Youtube user experience by automatically skipping those in-video ad reads that were going to be skipped anyway. 
 ## How ? 
 When a user navigates to a Youtube video URL, a request is sent to the backend server to execute the following; the back-end first retrieves the relevant audio transcript and timestamps, leveraging the python's `youtube-transcript-api` library. The transcript undergoes a preprocessing step whereby it is split into overlapping text chunks. Each chunk is then processed by a text-classification model. Specifically, we leverage the pretrained `distilbert-base-uncased` model, fine tuned on a manually curated dataset of 3K+ labelled samples, to employ binary classification for each text chunk as either an advertisement or not. 
 
 ## Local Setup 
-The plugin and server can be deployed for local use.
+skipr-plugin and the server can be deployed for local use.
 - Copy `server/.env.example` to `server/.env`, then `cd server && docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build`
-- Or use the serveo tunnel for quick plugin testing: `cd server; bash run.sh`
+- Or use the serveo tunnel for quick skipr-plugin testing: `cd server; bash run.sh`
 - Copy the serveo.net url forwarding traffic to the server. It should be of the form `https://xxx.serveo.net`
 - Navigate to the browser*, type `about:debugging#/runtime/this-firefox`
-- Click `Load Temporary Add-on` and select `manifest.json` 
-- Navigate to the plugin configuration menu and paste the serveo url and hit save.
+- Click `Load Temporary Add-on` and select `skipr-plugin/manifest.json` 
+- Navigate to the skipr-plugin configuration menu and paste the serveo url and hit save.
 
 *Currently only supports Firefox
 
