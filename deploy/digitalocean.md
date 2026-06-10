@@ -81,7 +81,7 @@ CLASSIFIER_BATCH_SIZE=32
 
 DB_USER=skipr
 DB_PASSWORD=<strong-password>
-DB_NAME=skipr_youtube_db
+DB_NAME=skipr_db
 MYSQL_ROOT_PASSWORD=<strong-root-password>
 ```
 
@@ -153,5 +153,5 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 Compose MySQL data lives in the `db_data` Docker volume. For a portfolio project, occasional manual backup is enough:
 
 ```bash
-docker compose exec db mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" skipr_youtube_db > backup.sql
+docker compose exec db mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" skipr_db > backup.sql
 ```
