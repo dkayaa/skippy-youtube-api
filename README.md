@@ -8,9 +8,9 @@ When a user navigates to a Youtube video URL, a request is sent to the backend s
 
 ## Local Setup 
 skipr-plugin and the server can be deployed for local use.
-- Copy `server/.env.example` to `server/.env`, then `cd server && docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build`
-- Or use the serveo tunnel for quick skipr-plugin testing: `cd server; bash run.sh`
-- Copy the serveo.net url forwarding traffic to the server. It should be of the form `https://xxx.serveo.net`
+- Copy `server/.env.example` to `server/.env`
+- **Native app** (DB in Docker, app on host): `cd server && pip install -r requirements.txt && ./run.sh` — app at http://127.0.0.1:8090
+- **Full stack in Docker**: `cd server && docker compose -f docker-compose.db.yml -f docker-compose.db.dev.yml -f docker-compose.yml -f docker-compose.dev.yml up -d --build`
 - Navigate to the browser*, type `about:debugging#/runtime/this-firefox`
 - Click `Load Temporary Add-on` and select `skipr-plugin/manifest.json` 
 - Navigate to the skipr-plugin configuration menu and paste the serveo url and hit save.

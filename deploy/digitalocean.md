@@ -90,7 +90,7 @@ Do **not** set `DB_HOST` or `DB_PORT` in `.env` — compose pins `DB_HOST=db` an
 ## 4. Start production stack
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.db.yml -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
 This starts all three services: **db**, **app**, **caddy**.
@@ -98,7 +98,7 @@ This starts all three services: **db**, **app**, **caddy**.
 First boot downloads ML models and can take several minutes:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f app
+docker compose -f docker-compose.db.yml -f docker-compose.yml -f docker-compose.prod.yml logs -f app
 ```
 
 Wait until you see gunicorn listening before testing HTTPS.
@@ -121,7 +121,7 @@ Point skipr-plugin at `https://api.yourdomain.com` (no trailing slash).
 cd /opt/skipr
 git pull
 cd server
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.db.yml -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
 Migrations run automatically via `entrypoint.sh` on container start.
@@ -141,17 +141,13 @@ Cheaper alternatives: Hetzner CPX31 (8 GB) ~€15/mo with the same compose setup
 ```bash
 cd server
 cp .env.example .env
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+docker compose -f docker-compose.db.yml -f docker-compose.db.dev.yml -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 # App: http://127.0.0.1:8090
 # MySQL: 127.0.0.1:3306 (localhost only)
 ```
 
-`run.sh` / serveo is for quick skipr-plugin testing only — not production.
-
-## Backups (optional)
-
-Compose MySQL data lives in the `db_data` Docker volume. For a portfolio project, occasional manual backup is enough:
+`./run.sh` runs the app on the host with only the DB in Docker — not production.
 
 ```bash
-docker compose exec db mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" skipr_db > backup.sql
+docker compose -f docker-compose.db.yml exec db mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" skipr_db > backup.sql
 ```
