@@ -40,6 +40,25 @@ After any code change, run the matching test suite before finishing. Fix failure
 
 If you add or modify behavior, add or update tests in the matching `tests/` subfolder in the same change.
 
+- **New functions require unit tests** in the matching `tests/` subfolder in the same change.
+- **All unit tests must pass** before finishing; fix failures caused by your change.
+
+### Static checks
+
+After Python changes, run pylint and mypy from repo root. Fix any failures caused by your change before finishing.
+
+**pylint** (PEP 8, excluding line-length `E501`):
+
+```bash
+pylint --disable=E501 server/ tests/
+```
+
+**mypy** (typing / static analysis):
+
+```bash
+PYTHONPATH=server mypy server/ tests/
+```
+
 ## Architecture
 
 - **API** (`/api/v2/timestamps`): `server/backend/` (`IntervalStore`, SQLAlchemy). Status-based polling (`pending` / `ready` / `failed`).
@@ -52,12 +71,15 @@ If you add or modify behavior, add or update tests in the matching `tests/` subf
 - Minimal diff only; no unrelated refactors or over-engineering.
 - Match existing naming, layout, imports, and abstraction level.
 - Thin route handlers; persistence in `server/backend/` stores.
-- Type hints on new public functions and store methods.
+- Type hints on all new functions and methods; mypy must pass.
 - SQLAlchemy ORM for all DB access; no raw SQL in route handlers.
 - Alembic migration for every schema change; idempotent when possible.
-- Self-explanatory code; comments only for non-obvious logic.
-- Tests for bugs and non-trivial logic only; place them in the matching `tests/` subfolder.
-- Always run the relevant test suite after code changes (see **Run tests on code changes**).
+- **Every new function** gets a brief inline comment (or docstring) at the top describing what it does.
+- Elsewhere, comments only for non-obvious logic.
+- **Logging**: when adding or touching key control flows (API routes, store decisions, background jobs, pipeline steps), add `info` / `warning` / `error` logs as appropriate. Use `logging.getLogger(__name__)`; do not use `print`.
+- **New functions require unit tests** in the matching `tests/` subfolder.
+- Always run the relevant test suite after code changes (see **Run tests on code changes**); all tests must pass.
+- Run pylint and mypy after Python changes (see **Static checks**); fix violations caused by your change.
 - Never commit `.env`, credentials, or tokens.
 - Do not commit, push, or amend unless the user explicitly asks.
 
@@ -68,7 +90,11 @@ If you add or modify behavior, add or update tests in the matching `tests/` subf
 - [ ] Schema changes include an Alembic migration
 - [ ] No secrets, debug prints, or dead commented code
 - [ ] v2 DB access via `backend/`, not ad-hoc SQL in `app.py`
-- [ ] New tests live under `tests/` in the correct subfolder
-- [ ] Relevant test suite run and passing (or failures explained)
+- [ ] New functions have an inline comment/docstring describing behavior
+- [ ] Key control flows touched include appropriate `info` / `warning` / `error` logs
+- [ ] New functions have unit tests under `tests/` in the correct subfolder
+- [ ] Relevant test suite run and all tests passing
+- [ ] `pylint --disable=E501 server/ tests/` passes (or only pre-existing failures explained)
+- [ ] `PYTHONPATH=server mypy server/ tests/` passes (or only pre-existing failures explained)
 
 When unsure, read `app.py`, `server/backend/`, and `transcript_labelling.py` first.
