@@ -24,10 +24,10 @@ class TestTranscriptLabelling(unittest.TestCase):
         expected = [{
             'start_time': 10,
             'end_time': 20,
-            'orgs': []
+            'orgs': ['UNKNOWN']
         }]
 
-        self.assertEqual(compute_intervals(input), expected)
+        self.assertEqual(compute_intervals(input, min_duration=0), expected)
 
     def test_no_merge_basic_with_orgs(self):
         input = [{
@@ -48,7 +48,7 @@ class TestTranscriptLabelling(unittest.TestCase):
             'orgs': ['org1']
         }]
 
-        self.assertEqual(compute_intervals(input), expected)
+        self.assertEqual(compute_intervals(input, min_duration=0), expected)
 
     def test_all_merge_basic(self):
         input = [{
@@ -60,13 +60,18 @@ class TestTranscriptLabelling(unittest.TestCase):
         }, {
             'start': 30,
             'label': 1
+        }, {
+            'start': 40,
+            'label': 0
         }]
 
         expected = [{
             'start_time': 10,
-            'end_time': 30,
-            'orgs': []
+            'end_time': 40,
+            'orgs': ['UNKNOWN']
         }]
+
+        self.assertEqual(compute_intervals(input, min_duration=0), expected)
 
     def test_all_merge_basic_orgs_same(self):
         input = [{
@@ -81,13 +86,18 @@ class TestTranscriptLabelling(unittest.TestCase):
             'start': 30,
             'label': 1,
             'orgs': []
+        }, {
+            'start': 40,
+            'label': 0
         }]
 
         expected = [{
             'start_time': 10,
-            'end_time': 30,
+            'end_time': 40,
             'orgs': ['org1']
         }]
+
+        self.assertEqual(compute_intervals(input, min_duration=0), expected)
 
     def test_all_merge_basic_orgs_dijoint(self):
         input = [{
@@ -102,13 +112,18 @@ class TestTranscriptLabelling(unittest.TestCase):
             'start': 30,
             'label': 1,
             'orgs': []
+        }, {
+            'start': 40,
+            'label': 0
         }]
 
         expected = [{
             'start_time': 10,
-            'end_time': 30,
+            'end_time': 40,
             'orgs': ['org1', 'org2']
         }]
+
+        self.assertEqual(compute_intervals(input, min_duration=0), expected)
 
     def test_all_merge_basic_orgs_single(self):
         input = [{
@@ -123,15 +138,18 @@ class TestTranscriptLabelling(unittest.TestCase):
             'start': 30,
             'label': 1,
             'orgs': []
+        }, {
+            'start': 40,
+            'label': 0
         }]
 
         expected = [{
             'start_time': 10,
-            'end_time': 30,
+            'end_time': 40,
             'orgs': ['org1', 'org2']
         }]
 
-        self.assertEqual(compute_intervals(input), expected)
+        self.assertEqual(compute_intervals(input, min_duration=0), expected)
 
     def test_no_overlap_hits_threshold_basic(self):
         input = [{
@@ -151,8 +169,10 @@ class TestTranscriptLabelling(unittest.TestCase):
         expected = [{
             'start_time': 10,
             'end_time': 25,
-            'orgs': []
+            'orgs': ['UNKNOWN']
         }]
+
+        self.assertEqual(compute_intervals(input, min_duration=0), expected)
 
     def test_no_overlap_no_threshold_basic(self):
         input = [{
@@ -172,14 +192,48 @@ class TestTranscriptLabelling(unittest.TestCase):
         expected = [{
             'start_time': 10,
             'end_time': 15,
-            'orgs': []
+            'orgs': ['UNKNOWN']
         }, {
             'start_time': 21,
             'end_time': 25,
-            'orgs': []
+            'orgs': ['UNKNOWN']
         }]
 
-        self.assertEqual(compute_intervals(input), expected)
+        self.assertEqual(compute_intervals(input, min_duration=0), expected)
+
+
+    def test_trailing_ad_without_closing_zero_is_skipped(self):
+        input = [{
+            'start': 10,
+            'label': 1
+        }, {
+            'start': 20,
+            'label': 1
+        }]
+
+        self.assertEqual(compute_intervals(input, min_duration=0), [])
+
+    def test_contiguous_ones_collects_all_window_starts(self):
+        input = [{
+            'start': 100,
+            'label': 1,
+            'orgs': ['A']
+        }, {
+            'start': 115,
+            'label': 1,
+            'orgs': ['B']
+        }, {
+            'start': 130,
+            'label': 0
+        }]
+
+        expected = [{
+            'start_time': 100,
+            'end_time': 130,
+            'orgs': ['A', 'B']
+        }]
+
+        self.assertEqual(compute_intervals(input, min_duration=0), expected)
 
 
 if __name__ == '__main__':
