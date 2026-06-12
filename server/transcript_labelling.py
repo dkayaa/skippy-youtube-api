@@ -1,35 +1,29 @@
 import os
 
-import torch
 from dotenv import load_dotenv
-from transformers import DistilBertForSequenceClassification, DistilBertTokenizer
 from youtube_transcript_api import YouTubeTranscriptApi
 
-from org_extractor import get_orgs
+from classifier import load_classifier
 
 ytt_api = YouTubeTranscriptApi()
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
-model_name = os.getenv("HUGGINGFACE_MODEL")
-tokenizer = DistilBertTokenizer.from_pretrained(model_name)
-model = DistilBertForSequenceClassification.from_pretrained(model_name)
+_classifier = load_classifier()
 
-WINDOW_SIZE = 30
+WINDOW_SIZE = 20
 STRIDE = 5
-BATCH_SIZE = int(os.getenv("CLASSIFIER_BATCH_SIZE", "32"))
 
 
-def _get_device() -> torch.device:
-    if torch.cuda.is_available():
-        return torch.device("cuda")
-    if torch.backends.mps.is_available():
-        return torch.device("mps")
-    return torch.device("cpu")
+def _ner_enabled() -> bool:
+    return os.getenv("NER_ENABLED", "false").lower() in ("1", "true", "yes")
 
 
-DEVICE = _get_device()
-model.to(DEVICE)
-model.eval()
+def _orgs_for_ad_window(segment_text: str) -> list[str]:
+    if not _ner_enabled():
+        return []
+    from org_extractor import get_orgs
+
+    return get_orgs(segment_text)
 
 
 class TranscriptFetchError(RuntimeError):
@@ -48,20 +42,7 @@ def _build_windows(fetched_transcript) -> list[tuple[str, float]]:
 
 
 def _classify_windows(texts: list[str]) -> list[int]:
-    labels: list[int] = []
-    for index in range(0, len(texts), BATCH_SIZE):
-        batch_texts = texts[index : index + BATCH_SIZE]
-        inputs = tokenizer(
-            batch_texts,
-            return_tensors="pt",
-            truncation=True,
-            padding=True,
-        )
-        inputs = {key: value.to(DEVICE) for key, value in inputs.items()}
-        with torch.no_grad():
-            outputs = model(**inputs)
-        labels.extend(torch.argmax(outputs.logits, dim=1).tolist())
-    return labels
+    return _classifier.predict(texts)
 
 
 def get_labelled_tscript(video_id: str) -> list[dict]:
@@ -84,7 +65,7 @@ def get_labelled_tscript(video_id: str) -> list[dict]:
 
     segments = []
     for (segment_text, segment_start), predicted_class in zip(windows, labels):
-        orgs = get_orgs(segment_text) if predicted_class == 1 else []
+        orgs = _orgs_for_ad_window(segment_text) if predicted_class == 1 else []
         segments.append(
             {
                 "text": segment_text,
@@ -108,16 +89,28 @@ def compute_intervals(data, interval_threshold=5, min_duration=45):
 
     intervals = []
 
-    for i in range(0, len(data) - 1):
-        if data[i]["label"] == 0:
+    i = 0
+    while i < len(data):
+        if data[i]["label"] != 1:
+            i += 1
             continue
-        intervals.append(
-            {
-                "start_time": data[i]["start"],
-                "end_time": data[i + 1]["start"],
-                "orgs": data[i].get("orgs", []),
-            }
-        )
+
+        start_time = data[i]["start"]
+        orgs: list[str] = []
+        j = i
+        while j < len(data) and data[j]["label"] == 1:
+            orgs = list(set(orgs + data[j].get("orgs", [])))
+            j += 1
+
+        if j < len(data) and data[j]["label"] == 0:
+            intervals.append(
+                {
+                    "start_time": start_time,
+                    "end_time": data[j]["start"],
+                    "orgs": orgs,
+                }
+            )
+        i = j
 
     intervals_merged = []
 
@@ -148,7 +141,7 @@ def compute_intervals(data, interval_threshold=5, min_duration=45):
     ]
 
     for interval in intervals_merged:
-        if len(interval["orgs"]) == 0:
-            interval["orgs"] = ["UNKNOWN"]
+        orgs = sorted(set(interval.get("orgs", [])))
+        interval["orgs"] = orgs if orgs else ["UNKNOWN"]
 
     return intervals_merged
