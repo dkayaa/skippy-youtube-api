@@ -1,4 +1,4 @@
-# Production overlay: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Production overlay: docker compose -f docker-compose.db.yml -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 #
 # Adds Caddy (TLS on :443). App and db stay on the internal Docker network only.
 

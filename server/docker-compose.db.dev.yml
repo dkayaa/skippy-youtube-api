@@ -1,0 +1,7 @@
+# Publish MySQL on localhost for native app dev (run.sh) or host-side mysql client.
+# Not used in production.
+
+services:
+  db:
+    ports:
+      - "127.0.0.1:3306:3306"

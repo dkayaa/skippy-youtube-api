@@ -14,7 +14,7 @@ model_name = os.getenv("HUGGINGFACE_MODEL")
 tokenizer = DistilBertTokenizer.from_pretrained(model_name)
 model = DistilBertForSequenceClassification.from_pretrained(model_name)
 
-WINDOW_SIZE = 10
+WINDOW_SIZE = 30
 STRIDE = 5
 BATCH_SIZE = int(os.getenv("CLASSIFIER_BATCH_SIZE", "32"))
 

@@ -1,24 +1,12 @@
-services:
-  db:
-    image: mysql:8.0
-    container_name: skipr-db
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - db_data:/var/lib/mysql
-      - ./initdb:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+# App service only. Always merge with docker-compose.db.yml.
+#
+# Local dev (app in Docker):
+#   docker compose -f docker-compose.db.yml -f docker-compose.db.dev.yml -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+#
+# Production:
+#   docker compose -f docker-compose.db.yml -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
+services:
   app:
     build: .
     restart: unless-stopped
@@ -36,6 +24,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 120s
-
-volumes:
-  db_data:
