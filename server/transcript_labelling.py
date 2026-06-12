@@ -1,3 +1,4 @@
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -9,6 +10,8 @@ ytt_api = YouTubeTranscriptApi()
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 _classifier = load_classifier()
+
+logger = logging.getLogger(__name__)
 
 WINDOW_SIZE = 20
 STRIDE = 5
@@ -46,18 +49,30 @@ def _classify_windows(texts: list[str]) -> list[int]:
 
 
 def get_labelled_tscript(video_id: str) -> list[dict]:
+    logger.info("Fetching transcript video_id=%s", video_id)
     try:
         fetched_transcript = ytt_api.fetch(video_id)
     except Exception as exc:
+        logger.error(
+            "Transcript fetch failed video_id=%s error=%s",
+            video_id,
+            exc,
+        )
         raise TranscriptFetchError(
             f"Failed to fetch transcript for video {video_id}"
         ) from exc
 
     if not fetched_transcript:
+        logger.warning("Empty transcript video_id=%s", video_id)
         return []
 
     windows = _build_windows(fetched_transcript)
     if not windows:
+        logger.warning(
+            "Transcript too short for windows video_id=%s snippet_count=%d",
+            video_id,
+            len(fetched_transcript),
+        )
         return []
 
     texts = [window[0] for window in windows]
@@ -75,6 +90,13 @@ def get_labelled_tscript(video_id: str) -> list[dict]:
             }
         )
 
+    ad_count = sum(1 for segment in segments if segment["label"] == 1)
+    logger.info(
+        "Labelled transcript video_id=%s window_count=%d ad_window_count=%d",
+        video_id,
+        len(segments),
+        ad_count,
+    )
     return segments
 
 

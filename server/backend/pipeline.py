@@ -1,8 +1,11 @@
 import hashlib
 import json
+import logging
 import os
 
 from transcript_labelling import compute_intervals, get_labelled_tscript
+
+logger = logging.getLogger(__name__)
 
 PIPELINE_VERSION = "2"
 STATUS_PENDING = "pending"
@@ -33,8 +36,16 @@ def serialize_intervals(intervals: list[dict]) -> list[dict]:
 
 
 def compute_video_analysis(video_id: str) -> dict:
+    logger.info("Computing video analysis video_id=%s", video_id)
     segments = get_labelled_tscript(video_id)
+    intervals = compute_intervals(segments)
+    logger.info(
+        "Computed analysis video_id=%s segment_count=%d interval_count=%d",
+        video_id,
+        len(segments),
+        len(intervals),
+    )
     return {
-        "intervals": compute_intervals(segments),
+        "intervals": intervals,
         "transcript_hash": hash_segments(segments),
     }

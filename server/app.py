@@ -1,15 +1,21 @@
-from flask import Flask, render_template, request, jsonify, make_response
-from dotenv import load_dotenv
+import logging
 import os
+
+from dotenv import load_dotenv
+from flask import Flask, jsonify, make_response, render_template, request
 from flask_cors import CORS
 from sqlalchemy import text
 
 from backend.database import get_session, init_app
 from backend.interval_store import IntervalStore
-from backend.pipeline import STATUS_PENDING, compute_video_analysis
+from backend.pipeline import STATUS_FAILED, STATUS_PENDING, STATUS_READY, compute_video_analysis
+from logging_config import configure_logging
 from youtube_url import YouTubeUrlError, parse_video_id
 
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+configure_logging()
+
+logger = logging.getLogger(__name__)
 
 
 app = Flask(__name__)
@@ -42,6 +48,7 @@ def _parse_link_param():
     try:
         return parse_video_id(request.args.get("link")), None
     except YouTubeUrlError as exc:
+        logger.warning("Invalid link parameter: %s", exc)
         return None, (jsonify({"error": str(exc)}), 400)
 
 
@@ -52,6 +59,11 @@ def api_search_v2():
         return error
 
     retry = request.args.get("retry", "").lower() in ("1", "true", "yes")
+    logger.info(
+        "timestamps request video_id=%s retry=%s",
+        video_id,
+        retry,
+    )
     store = IntervalStore(get_session())
     result = store.request_intervals(
         video_id,
@@ -59,6 +71,20 @@ def api_search_v2():
         retry=retry,
     )
     status_code = 202 if result["status"] == STATUS_PENDING else 200
+    if result["status"] == STATUS_READY:
+        logger.info(
+            "timestamps ready video_id=%s interval_count=%d",
+            video_id,
+            len(result.get("intervals", [])),
+        )
+    elif result["status"] == STATUS_FAILED:
+        logger.warning(
+            "timestamps failed video_id=%s error=%s",
+            video_id,
+            result.get("error"),
+        )
+    else:
+        logger.info("timestamps pending video_id=%s", video_id)
     return jsonify(result), status_code
 
 
@@ -68,6 +94,7 @@ def health():
         get_session().execute(text("SELECT 1"))
         return jsonify({"status": "ok"}), 200
     except Exception as exc:
+        logger.error("Health check failed: %s", exc)
         return jsonify({"status": "error", "error": str(exc)}), 503
 
 

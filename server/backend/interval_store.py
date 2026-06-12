@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from datetime import datetime, timezone
 
@@ -13,6 +14,8 @@ from backend.pipeline import (
     STATUS_READY,
     get_model_version,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class IntervalStore:
@@ -32,9 +35,24 @@ class IntervalStore:
         if video is not None and self._has_cached_intervals(video):
             if not self._needs_recompute(video, current_model):
                 if video.model_version in (None, "migrated"):
+                    logger.info(
+                        "Backfilling metadata for cached video video_id=%s",
+                        video_id,
+                    )
                     self._backfill_metadata(video, current_model)
                     self._session.commit()
+                logger.info(
+                    "Cache hit video_id=%s interval_count=%d",
+                    video_id,
+                    len(video.intervals_json or []),
+                )
                 return self._status_ready(video)
+            logger.info(
+                "Recompute required video_id=%s pipeline_version=%s model_version=%s",
+                video_id,
+                video.pipeline_version,
+                video.model_version,
+            )
 
         if (
             video is not None
@@ -42,14 +60,34 @@ class IntervalStore:
             and not retry
             and not self._needs_recompute(video, current_model)
         ):
+            logger.warning(
+                "Returning cached failure video_id=%s error=%s",
+                video_id,
+                video.error_message,
+            )
             return self._status_failed(video)
 
         if video is not None and video.status == STATUS_PENDING:
             if is_analysis_active(video_id):
+                logger.info(
+                    "Analysis already in progress video_id=%s",
+                    video_id,
+                )
                 return self._status_pending()
+            logger.warning(
+                "Pending row without active job; restarting analysis video_id=%s",
+                video_id,
+            )
             self._mark_pending(video)
             start_analysis_job(video_id, compute_analysis)
             return self._status_pending()
+
+        if video is None:
+            logger.info("Starting analysis for new video video_id=%s", video_id)
+        elif retry and video.status == STATUS_FAILED:
+            logger.info("Retrying failed analysis video_id=%s", video_id)
+        else:
+            logger.info("Starting analysis video_id=%s status=%s", video_id, video.status)
 
         self._mark_pending(video, video_id)
         start_analysis_job(video_id, compute_analysis)
